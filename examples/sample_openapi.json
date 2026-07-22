@@ -1,0 +1,260 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Sample API",
+    "description": "A sample OpenAPI specification for testing API Ghost Hunter.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.example.com",
+      "description": "Staging server"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "username": { "type": "string", "example": "johndoe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "role": { "type": "string", "enum": ["admin", "user", "guest"], "example": "user" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "username", "email"]
+      },
+      "CreateUser": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string", "example": "johndoe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "password": { "type": "string", "format": "password", "example": "secret123" }
+        },
+        "required": ["username", "email", "password"]
+      },
+      "UpdateUser": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["admin", "user", "guest"] }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer" },
+          "message": { "type": "string" }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Widget" },
+          "price": { "type": "number", "format": "float", "example": 9.99 },
+          "stock": { "type": "integer", "example": 100 },
+          "active": { "type": "boolean", "example": true }
+        },
+        "required": ["id", "name", "price"]
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/users": {
+      "get": {
+        "summary": "List all users",
+        "description": "Retrieve a paginated list of all users.",
+        "tags": ["users"],
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "description": "Page number", "required": false, "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "description": "Items per page", "required": false, "schema": { "type": "integer", "default": 20, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": { "description": "A list of users", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }, "total": { "type": "integer" }, "page": { "type": "integer" } } } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "description": "Create a new user account.",
+        "tags": ["users"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUser" } } } },
+        "responses": {
+          "201": { "description": "User created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "description": "Retrieve a single user by their ID.",
+        "tags": ["users"],
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [{ "name": "user_id", "in": "path", "description": "The user ID", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "A single user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "summary": "Update user",
+        "description": "Update an existing user's information.",
+        "tags": ["users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "user_id", "in": "path", "description": "The user ID", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateUser" } } } },
+        "responses": {
+          "200": { "description": "User updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }
+        }
+      },
+      "delete": {
+        "summary": "Delete user",
+        "description": "Delete a user by their ID.",
+        "tags": ["users"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "user_id", "in": "path", "description": "The user ID", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "204": { "description": "User deleted" },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/users/export": {
+      "get": {
+        "summary": "Export all users (deprecated)",
+        "description": "Export all user data as a CSV file. This endpoint is deprecated and will be removed.",
+        "tags": ["users"],
+        "deprecated": true,
+        "security": [],
+        "responses": {
+          "200": { "description": "CSV file download", "content": { "text/csv": { "schema": { "type": "string", "format": "binary" } } } }
+        }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "summary": "List all products",
+        "description": "Retrieve a list of all products.",
+        "tags": ["products"],
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [{ "name": "category", "in": "query", "description": "Filter by category", "required": false, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "A list of products", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } } }
+        }
+      },
+      "post": {
+        "summary": "Create a product",
+        "description": "Create a new product entry.",
+        "tags": ["products"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+        "responses": {
+          "201": { "description": "Product created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } }
+        }
+      }
+    },
+    "/api/v1/products/{product_id}": {
+      "get": {
+        "summary": "Get product by ID",
+        "description": "Retrieve a single product by its ID.",
+        "tags": ["products"],
+        "security": [{ "ApiKeyAuth": [] }],
+        "parameters": [{ "name": "product_id", "in": "path", "description": "The product ID", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "A single product", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "404": { "description": "Product not found" }
+        }
+      },
+      "patch": {
+        "summary": "Partially update product",
+        "description": "Update specific fields of a product.",
+        "tags": ["products"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "product_id", "in": "path", "description": "The product ID", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+        "responses": {
+          "200": { "description": "Product updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } }
+        }
+      }
+    },
+    "/api/v1/admin/config": {
+      "get": {
+        "summary": "Get server configuration",
+        "description": "Retrieve server configuration details. Admin only.",
+        "tags": ["admin"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Server configuration", "content": { "application/json": { "schema": { "type": "object", "properties": { "version": { "type": "string" }, "debug": { "type": "boolean" }, "database": { "type": "string" } } } } } },
+          "403": { "description": "Forbidden - admin access required" }
+        }
+      }
+    },
+    "/api/v1/admin/logs": {
+      "get": {
+        "summary": "Get server logs (no auth)",
+        "description": "Retrieve recent server logs. This endpoint has no security defined.",
+        "tags": ["admin"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Server logs", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object", "properties": { "timestamp": { "type": "string" }, "level": { "type": "string" }, "message": { "type": "string" } } } } } } }
+        }
+      }
+    },
+    "/api/v2/users": {
+      "get": {
+        "summary": "List all users (v2)",
+        "description": "Retrieve a paginated list of all users with additional fields.",
+        "tags": ["users", "v2"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "description": "Page number", "required": false, "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "description": "Items per page", "required": false, "schema": { "type": "integer", "default": 20, "maximum": 100 } },
+          { "name": "sort", "in": "query", "description": "Sort field", "required": false, "schema": { "type": "string", "enum": ["username", "email", "created_at"] } }
+        ],
+        "responses": {
+          "200": { "description": "A list of users with metadata", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }, "total": { "type": "integer" }, "page": { "type": "integer" }, "total_pages": { "type": "integer" } } } } } }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the API is running.",
+        "tags": ["system"],
+        "security": [],
+        "responses": {
+          "200": { "description": "API is healthy", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" }, "uptime": { "type": "number" } } } } } }
+        }
+      }
+    }
+  }
+}
